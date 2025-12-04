@@ -1,4 +1,13 @@
-steps:
+name: Sync to Hugging Face hub
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  sync-to-hub:
+    runs-on: ubuntu-latest
+    steps:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
@@ -7,25 +16,27 @@ steps:
       - name: Push to hub
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          # 请确保下面的地址是你的 Space 地址
           HF_SPACE_URL: https://huggingface.co/spaces/tianba01/jimeng-api
         run: |
           # 1. 配置 Git 身份
           git config --global user.email "action@github.com"
           git config --global user.name "GitHub Action"
           
-          # 2. 删除包含图片的文件夹
-          rm -rf doc
-          
-          # 3. 【核心大招】创建一个全新的孤儿分支 (没有任何历史记录)
-          # 这样 Hugging Face 就看不到以前的历史了，只能看到现在干净的文件
+          # 2. 切换到孤儿分支（清空历史记录）
           git checkout --orphan temp-deploy-branch
           
-          # 4. 添加所有文件 (此时 doc 已经被删了，不会被加进去)
+          # 3. 清空暂存区，防止幽灵文件残留
+          git rm -rf --cached .
+          
+          # 4. 物理删除 doc 文件夹（彻底移除图片）
+          rm -rf doc
+          
+          # 5. 重新添加所有文件（此时 doc 已不存在，不会被添加）
           git add .
           
-          # 5. 提交一个新的“初始提交”
+          # 6. 提交
           git commit -m "Deploy clean version to HF"
           
-          # 6. 强行推送到 Hugging Face 的 main 分支
-          # 注意：这里把本地的 temp-deploy-branch 推送到远程的 main
+          # 7. 强推
           git push --force https://oauth2:$HF_TOKEN@${HF_SPACE_URL#https://} temp-deploy-branch:main
