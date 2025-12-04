@@ -1,3 +1,12 @@
+---
+title: Jimeng Free API
+emoji: 🚀
+colorFrom: blue
+colorTo: purple
+sdk: docker
+pinned: false
+---
+
 # Jimeng AI Free 服务
 
 [![](https://img.shields.io/github/license/llm-red-team/jimeng-free-api.svg)](LICENSE)
