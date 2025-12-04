@@ -1,21 +1,29 @@
-FROM node:lts AS BUILD_IMAGE
+# 1. 使用 Node.js 环境
+FROM node:18-slim
 
+# 2. 设置工作目录
 WORKDIR /app
 
-COPY . /app
+# 3. 复制所有文件
+COPY . .
 
-RUN yarn install --registry https://registry.npmmirror.com/ --ignore-engines && yarn run build
+# 4. 安装依赖并编译 (TypeScript 项目必须编译)
+RUN npm install
+RUN npm run build
 
-FROM node:lts-alpine
+# 5. 创建非 root 用户 (Hugging Face 安全硬性要求)
+RUN useradd -m -u 1000 user
+USER user
 
-COPY --from=BUILD_IMAGE /app/configs /app/configs
-COPY --from=BUILD_IMAGE /app/package.json /app/package.json
-COPY --from=BUILD_IMAGE /app/dist /app/dist
-COPY --from=BUILD_IMAGE /app/public /app/public
-COPY --from=BUILD_IMAGE /app/node_modules /app/node_modules
+# 6. 设置环境变量
+# 强制让程序监听 7860 端口
+ENV PORT=7860
+# 设置时区
+ENV TZ=Asia/Shanghai
 
-WORKDIR /app
+# 7. 暴露端口
+EXPOSE 7860
 
-EXPOSE 8000
-
-CMD ["npm", "start"]
+# 8. 启动命令
+# 编译后的启动命令通常是 npm run start
+CMD ["npm", "run", "start"]
