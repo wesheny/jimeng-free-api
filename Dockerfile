@@ -7,23 +7,24 @@ WORKDIR /app
 # 3. 复制所有文件
 COPY . .
 
-# 4. 安装依赖并编译 (TypeScript 项目必须编译)
+# 4. 安装依赖并编译
 RUN npm install
 RUN npm run build
 
-# 5. 创建非 root 用户 (Hugging Face 安全硬性要求)
-RUN useradd -m -u 1000 user
-USER user
+# 5. 【关键修改】设置权限并切换用户
+# 既然 node 镜像里已经有 UID 1000 的用户(叫 node)，我们就直接用它
+# 先把文件权限赋给这个用户，防止读写报错
+RUN chown -R node:node /app
+
+# 切换到内置的 node 用户
+USER node
 
 # 6. 设置环境变量
-# 强制让程序监听 7860 端口
 ENV PORT=7860
-# 设置时区
 ENV TZ=Asia/Shanghai
 
 # 7. 暴露端口
 EXPOSE 7860
 
 # 8. 启动命令
-# 编译后的启动命令通常是 npm run start
 CMD ["npm", "run", "start"]
