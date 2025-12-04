@@ -1,13 +1,4 @@
-name: Sync to Hugging Face hub
-on:
-  push:
-    branches: [main]
-  workflow_dispatch:
-
-jobs:
-  sync-to-hub:
-    runs-on: ubuntu-latest
-    steps:
+steps:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
@@ -16,22 +7,25 @@ jobs:
       - name: Push to hub
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
-          # 你的 Space 地址
           HF_SPACE_URL: https://huggingface.co/spaces/tianba01/jimeng-api
         run: |
-          # 1. 配置 Git 身份 (为了提交删除操作)
+          # 1. 配置 Git 身份
           git config --global user.email "action@github.com"
           git config --global user.name "GitHub Action"
           
-          # 2. 【核心修复】删除包含图片的文件夹
-          # 这是为了解决 "binary files" 报错
-          echo "Removing doc folder..."
+          # 2. 删除包含图片的文件夹
           rm -rf doc
           
-          # 3. 提交删除更改
-          git add .
-          git commit -m "Fix: remove binary files for HF deployment" || echo "No changes to commit"
+          # 3. 【核心大招】创建一个全新的孤儿分支 (没有任何历史记录)
+          # 这样 Hugging Face 就看不到以前的历史了，只能看到现在干净的文件
+          git checkout --orphan temp-deploy-branch
           
-          # 4. 推送到 Hugging Face
-          # 使用 Shell 语法截取 URL 中的域名部分
-          git push --force https://oauth2:$HF_TOKEN@${HF_SPACE_URL#https://} HEAD:main
+          # 4. 添加所有文件 (此时 doc 已经被删了，不会被加进去)
+          git add .
+          
+          # 5. 提交一个新的“初始提交”
+          git commit -m "Deploy clean version to HF"
+          
+          # 6. 强行推送到 Hugging Face 的 main 分支
+          # 注意：这里把本地的 temp-deploy-branch 推送到远程的 main
+          git push --force https://oauth2:$HF_TOKEN@${HF_SPACE_URL#https://} temp-deploy-branch:main
