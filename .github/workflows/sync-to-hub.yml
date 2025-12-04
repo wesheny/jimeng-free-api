@@ -21,4 +21,4 @@ jobs:
           # 修改下面的两行：将 username 换成你的 HF 用户名，space-name 换成你的 Space 名字
           # 例如: huggingface.co/spaces/zhangsan/ai-pet-stylist
           HF_SPACE_URL: https://huggingface.co/spaces/tianba01/jimeng-api
-        run: git push https://oauth2:$HF_TOKEN@${HF_SPACE_URL#https://} main
+        run: git push https://oauth2:$HF_TOKEN@${HF_SPACE_URL#https://} HEAD:main
