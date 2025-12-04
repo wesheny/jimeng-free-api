@@ -1,10 +1,7 @@
-
 name: Sync to Hugging Face hub
 on:
   push:
     branches: [main]
-
-  # to run this workflow manually from the Actions tab
   workflow_dispatch:
 
 jobs:
@@ -15,10 +12,26 @@ jobs:
         with:
           fetch-depth: 0
           lfs: true
+      
       - name: Push to hub
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
-          # 修改下面的两行：将 username 换成你的 HF 用户名，space-name 换成你的 Space 名字
-          # 例如: huggingface.co/spaces/zhangsan/ai-pet-stylist
+          # 你的 Space 地址
           HF_SPACE_URL: https://huggingface.co/spaces/tianba01/jimeng-api
-        run: git push --force https://oauth2:$HF_TOKEN@${HF_SPACE_URL#https://} HEAD:main
+        run: |
+          # 1. 配置 Git 身份 (为了提交删除操作)
+          git config --global user.email "action@github.com"
+          git config --global user.name "GitHub Action"
+          
+          # 2. 【核心修复】删除包含图片的文件夹
+          # 这是为了解决 "binary files" 报错
+          echo "Removing doc folder..."
+          rm -rf doc
+          
+          # 3. 提交删除更改
+          git add .
+          git commit -m "Fix: remove binary files for HF deployment" || echo "No changes to commit"
+          
+          # 4. 推送到 Hugging Face
+          # 使用 Shell 语法截取 URL 中的域名部分
+          git push --force https://oauth2:$HF_TOKEN@${HF_SPACE_URL#https://} HEAD:main
