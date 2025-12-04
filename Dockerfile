@@ -11,20 +11,19 @@ COPY . .
 RUN npm install
 RUN npm run build
 
-# 5. 【关键修改】设置权限并切换用户
-# 既然 node 镜像里已经有 UID 1000 的用户(叫 node)，我们就直接用它
-# 先把文件权限赋给这个用户，防止读写报错
+# 5. 【关键修改】修复权限问题
+# node 镜像自带一个叫 node 的用户(UID 1000)，我们直接把文件权限给它
 RUN chown -R node:node /app
 
-# 切换到内置的 node 用户
+# 6. 切换到内置的 node 用户 (不再使用 useradd 创建新用户)
 USER node
 
-# 6. 设置环境变量
+# 7. 设置环境变量
 ENV PORT=7860
 ENV TZ=Asia/Shanghai
 
-# 7. 暴露端口
+# 8. 暴露端口
 EXPOSE 7860
 
-# 8. 启动命令
+# 9. 启动命令
 CMD ["npm", "run", "start"]
